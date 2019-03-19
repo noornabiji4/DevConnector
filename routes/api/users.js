@@ -7,9 +7,11 @@ const keys = require('../../config/keys')
 const passport = require('passport');
 
 //load  Input validation 
-const validateRagisterInput = require('../../validation/register')
+const validateRegisterInput = require('../../validation/register')
+const validateLoginInput = require('../../validation/login');
+
 //Load user model
-const User = require('../../model/User')
+const User = require('../../models/User')
 
 //@routes GET api/users/test
 //desc Tests users route
@@ -21,47 +23,53 @@ router.get('/test', (req, res) => res.json({ msg: "Users works" }));
 //desc Tests users route
 //@access public
 router.post('/register', (req, res) => {
-    const { errors, isValid } = validateRagisterInput(req.body);
+    const { errors, isValid } = validateRegisterInput(req.body);
 
     //check validation 
     if (!isValid) {
         return res.status(400).json(errors)
     }
 
-    User.findOne({ email: req.body.email })
-        .then(user => {
-            if (user) {
-                errors.email = 'Email already exists'
-                return res.status(400).json(errors);
-            } else {
-                const avatar = gravatar.url(req.body.email, {
-                    s: '200', //size
-                    r: 'pg', //rating
-                    d: 'mm' //Default
-                });
+    User.findOne({ email: req.body.email }).then(user => {
+        if (user) {
+            errors.email = 'Email already exists'
+            return res.status(400).json(errors);
+        } else {
+            const avatar = gravatar.url(req.body.email, {
+                s: '200', //size
+                r: 'pg', //rating
+                d: 'mm' //Default
+            });
 
-                const newUser = new User({
-                    name: req.body.name,
-                    email: req.body.email,
-                    avatar,
-                    password: req.body.password
-                });
+            const newUser = new User({
+                name: req.body.name,
+                email: req.body.email,
+                avatar,
+                password: req.body.password
+            });
 
-                bcrypt.genSalt(10, (err, salt) => {
-                    bcrypt.hash(newUser.password, salt, (err, hash) => {
-                        if (err) throw err;
-                        newUser.password = hash;
-                        newUser.save()
-                            .then(user => res.json(user))
-                            .catch(err => console.log(err))
-                    })
+            bcrypt.genSalt(10, (err, salt) => {
+                bcrypt.hash(newUser.password, salt, (err, hash) => {
+                    if (err) throw err;
+                    newUser.password = hash;
+                    newUser.save()
+                        .then(user => res.json(user))
+                        .catch(err => console.log(err))
                 })
-            }
-        })
+            })
+        }
+    })
     //@routes GET api/users/login
     //desc login user / Returning  JWT token
     //@access public
     router.post('/login', (req, res) => {
+        const { errors, isValid } = validateLoginInput(req.body);
+
+        // Check Validation
+        if (!isValid) {
+            return res.status(400).json(errors);
+        }
+
         const email = req.body.email;
         const password = req.body.password;
 
@@ -70,7 +78,8 @@ router.post('/register', (req, res) => {
             .then(user => {
                 //check for user 
                 if (!user) {
-                    return res.status(404).json({ email: 'User not found' })
+                    errors.email = 'User not found'
+                    return res.status(404).json(errors)
                 }
                 //check password
                 bcrypt.compare(password, user.password).then(isMatch => {
@@ -80,14 +89,16 @@ router.post('/register', (req, res) => {
                         const payload = { id: user.id, name: user.name, avatar: user.avatar } //create jwd payload
 
                         // sign  token
-                        jwt.sign(payload, key.secretORKey, { expiresIn: 3600 }, (err, token) => {
+                        jwt.sign(payload, keys.secretOrKey, { expiresIn: 3600 }, (err, token) => {
                             res.json({
                                 success: true,
-                                token: 'Bearer' + token
+                                token: 'Bearer' + token,
+                                err: err
                             })
                         })
                     } else {
-                        return res.status(400).json({ password: 'Password incorrect' });
+                        errors.password = 'Password incorrect'
+                        return res.status(400).json(errors);
                     }
                 });
             });
@@ -96,7 +107,7 @@ router.post('/register', (req, res) => {
 //@routes GET api/users/current
 //desc return current user
 //@access private
-router.get ('/current',passport.authenticate('jwt',{session: false}),(req,res)=>{
+router.get('/current', passport.authenticate('jwt', { session: false }), (req, res) => {
     res.json({
         id: req.user.id,
         name: req.user.name,
