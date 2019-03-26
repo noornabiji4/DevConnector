@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const passport = require('passport');
 
 //load validaton 
-const validProfileInput  = require ('../../validation/profile')
+const validProfileInput = require('../../validation/profile')
 
 //load profle model
 const Profile = require('../../models/Profile')
@@ -37,14 +37,14 @@ router.get('/', passport.authenticate('jwt', { session: false }), (req, res) => 
 //desc Create or edit user profile
 //@access private
 router.post('/', passport.authenticate('jwt', { session: false }), (req, res) => {
-    const {errors , isvalid} = validProfileInput(req.body);
+    const { errors, isvalid } = validProfileInput(req.body);
 
     //check validation 
-    if(!isvalid){
+    if (!isvalid) {
         //return any errors with 400 status
         return res.status(400).json(errors)
     }
-    
+
     //Get Fields 
     const profileFields = {}
     profileFields.user = req.user.id;
@@ -56,29 +56,29 @@ router.post('/', passport.authenticate('jwt', { session: false }), (req, res) =>
     if (req.body.githubusername) profileFields.githubusername = req.body.githubusername;
     //Skills - split into array
 
-    if (typeof req.body.skills !== 'undefined'){
+    if (typeof req.body.skills !== 'undefined') {
         profileFields.skills = req.body.skills(',');
-    } 
+    }
     //Social 
-    profileFields.social ={}
-    if (req.body.youtube) profileFields.social.youtube  = req.body.youtube;
+    profileFields.social = {}
+    if (req.body.youtube) profileFields.social.youtube = req.body.youtube;
     if (req.body.twitter) profileFields.social.twitter = req.body.twitter;
     if (req.body.facebook) profileFields.social.facebook = req.body.facebook;
     if (req.body.linkedin) profileFields.social.linkedin = req.body.linkedin;
     if (req.body.instagram) profileFields.social.instagram = req.body.instagram;
 
-    Profile.findOne({user:req.body.id}).then(profile=>{
-        if(profile){
+    Profile.findOne({ user: req.body.id }).then(profile => {
+        if (profile) {
             //update
             Profile.findOneAndDelete(
-                {user:req.user.id},
-                {$set:profileFields},
-                {new: true}
+                { user: req.user.id },
+                { $set: profileFields },
+                { new: true }
             ).then(profile => res.json(profile))
         }
         else {
-            Profile.findOne({handle: profileFields.handle}).then(profile => {
-                if (profile ){
+            Profile.findOne({ handle: profileFields.handle }).then(profile => {
+                if (profile) {
                     errors.handle = 'That handle already exists';
                     res.status(400).json(errors)
                 }
