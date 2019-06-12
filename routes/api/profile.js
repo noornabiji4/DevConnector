@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const passport = require('passport');
 
 //load validation 
-const validProfileInput = require('../../validation/profile')
+const validateProfileInput = require('../../validation/profile')
 
 //load profle model
 const Profile = require('../../models/Profile')
@@ -33,14 +33,14 @@ router.get('/', passport.authenticate('jwt', { session: false }), (req, res) => 
         .catch(err => res.status(404).json(err))
 })
 
-//routes POST api/profile
+//routes POST api/profile  
 //desc Create or edit user profile
 //@access private
 router.post('/', passport.authenticate('jwt', { session: false }), (req, res) => {
-    const { errors, isvalid } = validProfileInput(req.body);
+    const { errors, isValid } = validateProfileInput(req.body);
 
     //check validation 
-    if (!isvalid) {
+    if (!isValid) {
         //return any errors with 400 status
         return res.status(400).json(errors)
     }
@@ -57,7 +57,7 @@ router.post('/', passport.authenticate('jwt', { session: false }), (req, res) =>
     //Skills - split into array
 
     if (typeof req.body.skills !== 'undefined') {
-        profileFields.skills = req.body.skills(',');
+        profileFields.skills = req.body.skills.split(',');
     }
     //Social 
     profileFields.social = {}
