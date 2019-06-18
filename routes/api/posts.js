@@ -25,23 +25,23 @@ router.get('/', (req, res) => {
     Post.find()
         .sort({ date: -1 })
         .then(posts => res.json(posts))
-        .catch(err => res.status(404)).json({ nopostsfound: 'No posts found' })
+        .catch(err => res.status(404).json({ nopostsfound: 'No posts found' }))
 })
 
 //@routes   GET api/posts/:id
 //desc      GET post by id
 //@access   Public
-router.get('/', (req, res) => {
+router.get('/:id', (req, res) => {
     Post.findById(req.params.id)
         .then(post => res.json(post))
-        .catch(err => res.status(404)).json({ nopostfound: 'No post found with that ID' })
+        .catch(err => res.status(404).json({ nopostfound: 'No post found with that ID' }))
 })
 
 //@routes   POST api/posts
 //desc      Tests post route
 //@access   Private
 router.post('/', passort.authenticate('jwt', { session: false }), (req, res) => {
-    const { erorrs, isValid } = validatePostInput(req.body);
+    const { errors, isValid } = validatePostInput(req.body);
 
     //check validation
     if (!isValid) {
@@ -51,7 +51,7 @@ router.post('/', passort.authenticate('jwt', { session: false }), (req, res) => 
 
     const newPost = new Post({
         text: req.body.text,
-        name: req.body.name,
+        name: req.body.name ,
         avatar: req.body.avatar,
         user: req.body.id
     })
@@ -62,7 +62,7 @@ router.post('/', passort.authenticate('jwt', { session: false }), (req, res) => 
 //@routes DELETE api/posts/:id
 //desc DELETE post
 //@access Private
-router.delete('/:id', passor.authenticate('jwt', { session: false }), (req, res) => {
+router.delete('/:id', passort.authenticate('jwt', { session: false }), (req, res) => {
     Profile.findOne({ user: req.user.id })
         .then(profile => {
             Post.findById(req.params.id)
