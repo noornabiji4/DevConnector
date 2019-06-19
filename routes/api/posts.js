@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const passort = require('passport');
+const passport = require('passport');
 
 //Post model
 const Post = require('../../models/Posts')
@@ -17,6 +17,7 @@ const validatePostInput = require('../../validation/post')
 //@access public
 
 router.get('/test', (req, res) => res.json({ msg: "Posts works" }));
+
 
 //@routes   GET api/posts
 //desc      GET posts
@@ -40,7 +41,7 @@ router.get('/:id', (req, res) => {
 //@routes   POST api/posts
 //desc      Tests post route
 //@access   Private
-router.post('/', passort.authenticate('jwt', { session: false }), (req, res) => {
+router.post('/', passport.authenticate('jwt', { session: false }), (req, res) => {
     const { errors, isValid } = validatePostInput(req.body);
 
     //check validation
@@ -51,9 +52,9 @@ router.post('/', passort.authenticate('jwt', { session: false }), (req, res) => 
 
     const newPost = new Post({
         text: req.body.text,
-        name: req.body.name ,
+        name: req.body.name,
         avatar: req.body.avatar,
-        user: req.body.id
+        user: req.user.id
     })
     newPost.save().then(post => res.json(post));
 
@@ -62,17 +63,62 @@ router.post('/', passort.authenticate('jwt', { session: false }), (req, res) => 
 //@routes DELETE api/posts/:id
 //desc DELETE post
 //@access Private
-router.delete('/:id', passort.authenticate('jwt', { session: false }), (req, res) => {
+router.delete('/:id', passport.authenticate('jwt', { session: false }), (req, res) => {
     Profile.findOne({ user: req.user.id })
         .then(profile => {
             Post.findById(req.params.id)
                 .then(post => {
                     //check for post owner
                     if (post.user.toString() !== req.user.id) {
-                        return res.status(401).json({ notauthorized: 'USer not authorized' })
+                        return res.status(401).json({ notauthorized: 'User not authorized' })
                     }
                     //Delete
                     post.remove().then(() => res.json({ success: true }))
+                })
+                .catch(err => res.status(404).json({ postnotfound: 'No post found' }));
+        })
+});
+
+//@routes POST api/posts/like/:id
+//desc Like post
+//@access Private
+router.post('/like/:id', passport.authenticate('jwt', { session: false }), (req, res) => {
+    Profile.findOne({ user: req.user.id })
+        .then(profile => {
+            Post.findById(req.params.id)
+                .then(post => {
+                    if (post.likes.filter(like => like.user.toString() === req.user.id).length > 0) {
+                        return res.status(400).json({ alreadyliked: 'User alreday liked this post' })
+                    }
+                    //Add user id to liked array
+                    post.likes.unshift({ user: req.user.id });
+                    post.save().then(post => res.json(post))
+                })
+                .catch(err => res.status(404).json({ postnotfound: 'No post found' }));
+        })
+});
+
+//@routes POST api/posts/unlike/:id
+//desc Unlike post
+//@access Private
+router.post('/unlike/:id', passport.authenticate('jwt', { session: false }), (req, res) => {
+    Profile.findOne({ user: req.user.id })
+        .then(profile => {
+            Post.findById(req.params.id)
+                .then(post => {
+                    if (post.likes.filter(like => like.user.toString() === req.user.id).length === 0) {
+                        return res.status(400).json({ notliked: 'You have not yet liked this post' })
+                    }
+                    // Get remove index
+                    const removeIndex = post.likes
+                    .map(item =>item.user.toString())
+                    .indexOf(req.user.id);
+                    
+                    // Splice out of array
+                    post.likes.splice(removeIndex , 1)
+
+                    // Save
+                    post.save().then(post => res.json(post))
                 })
                 .catch(err => res.status(404).json({ postnotfound: 'No post found' }));
         })
