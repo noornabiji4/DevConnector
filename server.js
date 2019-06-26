@@ -9,7 +9,7 @@ const posts = require('./routes/api/posts');
 
 const app = express();
 
-//body parser middleware 
+// Body parser middleware 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json())
 
@@ -27,7 +27,7 @@ app.use(passport.initialize())
 //password Config
 require('./config/passport')(passport)
 
-// USe routes
+// Use routes
 app.use('/api/users', users);
 app.use('/api/profile', profile)
 app.use('/api/posts', posts)
