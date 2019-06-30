@@ -1,5 +1,5 @@
 # DevConnector
 DevConnector (MERN Stack )
 
-Authenticate with JWT web token
+Authenticate with JWT Json web token
 
