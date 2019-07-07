@@ -41,6 +41,7 @@ class CreateProfile extends Component {
                                 Let's get some information to make your profile sstand out
                             </p>
                             <small className="d-block pb-3"> * = require fields</small>
+                        
                         </div>
                     </div>
                 </div>
