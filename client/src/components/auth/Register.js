@@ -21,7 +21,7 @@ class Register extends Component {
     }
     componentDidMount() {
         if (this.props.auth.isAuthenticated) {
-            this.props.history.push('/dashboard')
+            this.props.history.push('/login')
         }
     }
     componentWillReceiveProps(nextProps) {
@@ -70,13 +70,13 @@ class Register extends Component {
                                     value={this.state.email}
                                     onChange={this.onChange}
                                     error={errors.email}
-                                    info = "This site user Gravatar so if you want a profile image, use a Gravatar email"
+                                    info="This site user Gravatar so if you want a profile image, use a Gravatar email"
                                 />
                                 <TextFieldGroup
                                     placeholder="Password"
                                     name="password"
                                     type="password"
-                                    value={this.state.passwo}
+                                    value={this.state.password}
                                     onChange={this.onChange}
                                     error={errors.password}
                                 />
